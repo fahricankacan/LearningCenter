@@ -30,34 +30,44 @@ app.MapControllers();
 
 var liftsEndPoint = app.MapGroup("/lifts");
 
-//Before
-//app.MapGet("/lifts", async (LiftDb db) =>
-//    await db.Lifts.ToListAsync());
 
-//After
-liftsEndPoint.MapGet("/", async (LiftDb db) =>
-    await db.Lifts.ToListAsync());
-
-
-liftsEndPoint.MapGet("/squats", async (LiftDb db) =>
-    await db.Lifts.Where(t => t.Name == Lift.LiftName.Squat).ToListAsync());
+liftsEndPoint.MapGet("/", GetAllLifts);
+liftsEndPoint.MapGet("/getSquats", GetLiftByName);
+liftsEndPoint.MapGet("/{id}", GetLift);
+liftsEndPoint.MapPost("/", CreateLift);
+liftsEndPoint.MapPut("/{id}", UpdateLift);
+liftsEndPoint.MapDelete("/{id}", DeleteLift);
 
 
-liftsEndPoint.MapGet("/{id}", async (int id, LiftDb db) =>
-    await db.Lifts.FindAsync(id)
+app.Run();
+
+static async Task<IResult> GetAllLifts(LiftDb db)
+{
+    return TypedResults.Ok(await db.Lifts.ToArrayAsync());
+}
+
+static async Task<IResult> GetLiftByName(LiftDb db)
+{
+    return TypedResults.Ok(await db.Lifts.Where(t => t.Name == Lift.LiftName.Squat).ToListAsync());
+}
+
+static async Task<IResult> GetLift(int id, LiftDb db)
+{
+    return await db.Lifts.FindAsync(id)
         is Lift todo
             ? Results.Ok(todo)
-            : Results.NotFound());
+            : Results.NotFound();
+}
 
-liftsEndPoint.MapPost("/", async (Lift lift, LiftDb db) =>
+static async Task<IResult> CreateLift(Lift lift, LiftDb db)
 {
     db.Lifts.Add(lift);
     await db.SaveChangesAsync();
 
-    return Results.Created($"/{lift.Id}", lift);
-});
+    return TypedResults.Created($"/todoitems/{lift.Id}", lift);
+}
 
-liftsEndPoint.MapPut("/{id}", async (int id, Lift inputLift, LiftDb db) =>
+static async Task<IResult> UpdateLift(int id, Lift inputLift, LiftDb db)
 {
     var lift = await db.Lifts.FindAsync(id);
 
@@ -69,10 +79,10 @@ liftsEndPoint.MapPut("/{id}", async (int id, Lift inputLift, LiftDb db) =>
 
     await db.SaveChangesAsync();
 
-    return Results.NoContent();
-});
+    return TypedResults.NoContent();
+}
 
-liftsEndPoint.MapDelete("/{id}", async (int id, LiftDb db) =>
+static async Task<IResult> DeleteLift(int id, LiftDb db)
 {
     if (await db.Lifts.FindAsync(id) is Lift todo)
     {
@@ -81,6 +91,6 @@ liftsEndPoint.MapDelete("/{id}", async (int id, LiftDb db) =>
         return Results.NoContent();
     }
 
-    return Results.NotFound();
-});
-app.Run();
+
+    return TypedResults.NotFound();
+}
