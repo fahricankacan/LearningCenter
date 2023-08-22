@@ -28,29 +28,36 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGet("/lifts", async (LiftDb db) =>
+var liftsEndPoint = app.MapGroup("/lifts");
+
+//Before
+//app.MapGet("/lifts", async (LiftDb db) =>
+//    await db.Lifts.ToListAsync());
+
+//After
+liftsEndPoint.MapGet("/", async (LiftDb db) =>
     await db.Lifts.ToListAsync());
 
 
-app.MapGet("/lifts/squats", async (LiftDb db) =>
+liftsEndPoint.MapGet("/squats", async (LiftDb db) =>
     await db.Lifts.Where(t => t.Name == Lift.LiftName.Squat).ToListAsync());
 
 
-app.MapGet("/lifts/{id}", async (int id, LiftDb db) =>
+liftsEndPoint.MapGet("/{id}", async (int id, LiftDb db) =>
     await db.Lifts.FindAsync(id)
         is Lift todo
             ? Results.Ok(todo)
             : Results.NotFound());
 
-app.MapPost("/lifts", async (Lift lift, LiftDb db) =>
+liftsEndPoint.MapPost("/", async (Lift lift, LiftDb db) =>
 {
     db.Lifts.Add(lift);
     await db.SaveChangesAsync();
 
-    return Results.Created($"/lifts/{lift.Id}", lift);
+    return Results.Created($"/{lift.Id}", lift);
 });
 
-app.MapPut("/lifts/{id}", async (int id, Lift inputLift, LiftDb db) =>
+liftsEndPoint.MapPut("/{id}", async (int id, Lift inputLift, LiftDb db) =>
 {
     var lift = await db.Lifts.FindAsync(id);
 
@@ -65,7 +72,7 @@ app.MapPut("/lifts/{id}", async (int id, Lift inputLift, LiftDb db) =>
     return Results.NoContent();
 });
 
-app.MapDelete("/lifts/{id}", async (int id, LiftDb db) =>
+liftsEndPoint.MapDelete("/{id}", async (int id, LiftDb db) =>
 {
     if (await db.Lifts.FindAsync(id) is Lift todo)
     {
