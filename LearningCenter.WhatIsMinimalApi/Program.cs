@@ -1,96 +1,131 @@
 using LearningCenter.WhatIsMinimalApi.Entity;
+using LearningCenter.WhatIsMinimalApi.Middleware;
 using LearningCenter.WhatIsMinimalApi.Repository;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<LiftDb>(opt => opt.UseInMemoryDatabase("LiftList"));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+Log.Logger = new LoggerConfiguration()
+    .WriteTo
+    .Console()
+    .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
 
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+try
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    Log.Information("Starting web application");
 
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-var liftsEndPoint = app.MapGroup("/lifts");
+    var builder = WebApplication.CreateBuilder(args);
+    builder.Host.UseSerilog(); // <-- Add this line
 
 
-liftsEndPoint.MapGet("/", GetAllLifts);
-liftsEndPoint.MapGet("/getSquats", GetLiftByName);
-liftsEndPoint.MapGet("/{id}", GetLift);
-liftsEndPoint.MapPost("/", CreateLift);
-liftsEndPoint.MapPut("/{id}", UpdateLift);
-liftsEndPoint.MapDelete("/{id}", DeleteLift);
+    // Add services to the container.
 
+    builder.Services.AddControllers();
+    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+    builder.Services.AddDbContext<LiftDb>(opt => opt.UseInMemoryDatabase("LiftList"));
+    //builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-app.Run();
+    var app = builder.Build();
 
-static async Task<IResult> GetAllLifts(LiftDb db)
-{
-    return TypedResults.Ok(await db.Lifts.ToArrayAsync());
-}
-
-static async Task<IResult> GetLiftByName(LiftDb db)
-{
-    return TypedResults.Ok(await db.Lifts.Where(t => t.Name == Lift.LiftName.Squat).ToListAsync());
-}
-
-static async Task<IResult> GetLift(int id, LiftDb db)
-{
-    return await db.Lifts.FindAsync(id)
-        is Lift todo
-            ? Results.Ok(todo)
-            : Results.NotFound();
-}
-
-static async Task<IResult> CreateLift(Lift lift, LiftDb db)
-{
-    db.Lifts.Add(lift);
-    await db.SaveChangesAsync();
-
-    return TypedResults.Created($"/todoitems/{lift.Id}", lift);
-}
-
-static async Task<IResult> UpdateLift(int id, Lift inputLift, LiftDb db)
-{
-    var lift = await db.Lifts.FindAsync(id);
-
-    if (lift is null) return Results.NotFound();
-
-    lift.Name = inputLift.Name;
-    lift.Weight = inputLift.Weight;
-    lift.Reps = inputLift.Reps;
-
-    await db.SaveChangesAsync();
-
-    return TypedResults.NoContent();
-}
-
-static async Task<IResult> DeleteLift(int id, LiftDb db)
-{
-    if (await db.Lifts.FindAsync(id) is Lift todo)
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
     {
-        db.Lifts.Remove(todo);
-        await db.SaveChangesAsync();
-        return Results.NoContent();
+
+        app.UseSwagger();
+        app.UseSwaggerUI();
     }
 
+    app.UseHttpsRedirection();
 
-    return TypedResults.NotFound();
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+    app.UseExceptionHandleMiddleware(); // Our middelware to handle exceptions
+
+    var liftsEndPoint = app.MapGroup("/lifts");
+
+
+    liftsEndPoint.MapGet("/", GetAllLifts);
+    liftsEndPoint.MapGet("/getSquats", GetLiftByName);
+    liftsEndPoint.MapGet("/{id}", GetLift);
+    liftsEndPoint.MapPost("/", CreateLift);
+    liftsEndPoint.MapPut("/{id}", UpdateLift);
+    liftsEndPoint.MapDelete("/{id}", DeleteLift);
+    app.MapGet("/fakeError", FakeError);
+
+    app.Run();
+
+    static async Task<IResult> GetAllLifts(LiftDb db)
+    {
+        return TypedResults.Ok(await db.Lifts.ToArrayAsync());
+    }
+
+    static async Task<IResult> GetLiftByName(LiftDb db)
+    {
+        return TypedResults.Ok(await db.Lifts.Where(t => t.Name == Lift.LiftName.Squat).ToListAsync());
+    }
+
+    static async Task<IResult> GetLift(int id, LiftDb db)
+    {
+        return await db.Lifts.FindAsync(id)
+            is Lift todo
+                ? Results.Ok(todo)
+                : Results.NotFound();
+    }
+
+    static async Task<IResult> CreateLift(Lift lift, LiftDb db)
+    {
+        db.Lifts.Add(lift);
+        await db.SaveChangesAsync();
+
+        return TypedResults.Created($"/todoitems/{lift.Id}", lift);
+    }
+
+    static async Task<IResult> UpdateLift(int id, Lift inputLift, LiftDb db)
+    {
+        var lift = await db.Lifts.FindAsync(id);
+
+        if (lift is null) return Results.NotFound();
+
+        lift.Name = inputLift.Name;
+        lift.Weight = inputLift.Weight;
+        lift.Reps = inputLift.Reps;
+
+        await db.SaveChangesAsync();
+
+        return TypedResults.NoContent();
+    }
+
+    static async Task<IResult> DeleteLift(int id, LiftDb db)
+    {
+        if (await db.Lifts.FindAsync(id) is Lift todo)
+        {
+            db.Lifts.Remove(todo);
+            await db.SaveChangesAsync();
+            return Results.NoContent();
+        }
+
+
+        return TypedResults.NotFound();
+    }
+
+    static Task<IResult> FakeError()
+    {
+
+        throw new InvalidOperationException("Fake error");
+
+    }
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
 }
