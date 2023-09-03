@@ -1,8 +1,9 @@
-﻿using System.Text.Json.Serialization;
+﻿using LearningCenter.Entity.Abstract;
+using System.Text.Json.Serialization;
 
-namespace LearningCenter.WhatIsMinimalApi.Entity
+namespace LearningCenter.Entity.Concrate
 {
-    public class Lift
+    public class Lift : IEntity
     {
         public int Id { get; set; }
         [JsonConverter(typeof(JsonStringEnumConverter))]

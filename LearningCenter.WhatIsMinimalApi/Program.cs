@@ -1,10 +1,13 @@
-using LearningCenter.WhatIsMinimalApi.Entity;
+using LearningCenter.Business.Abstract;
+using LearningCenter.Business.Concrate;
+using LearningCenter.Entity.Concrate;
+using LearningCenter.Repository.Abstract;
+using LearningCenter.Repository.Concrate;
 using LearningCenter.WhatIsMinimalApi.Middleware;
 using LearningCenter.WhatIsMinimalApi.Repository;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-
-
+using static LearningCenter.Entity.Concrate.Lift;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo
@@ -29,6 +32,9 @@ try
     builder.Services.AddDbContext<LiftDb>(opt => opt.UseInMemoryDatabase("LiftList"));
     //builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+
+    builder.Services.AddScoped<ILiftService, LiftManager>();
+    builder.Services.AddScoped<ILiftRepository, LiftRepository>();
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.
@@ -51,7 +57,7 @@ try
 
 
     liftsEndPoint.MapGet("/", GetAllLifts);
-    liftsEndPoint.MapGet("/getSquats", GetLiftByName);
+    liftsEndPoint.MapGet("/getByLiftName", GetLiftByName);
     liftsEndPoint.MapGet("/{id}", GetLift);
     liftsEndPoint.MapPost("/", CreateLift);
     liftsEndPoint.MapPut("/{id}", UpdateLift);
@@ -60,58 +66,41 @@ try
 
     app.Run();
 
-    static async Task<IResult> GetAllLifts(LiftDb db)
+    static async Task<IResult> GetAllLifts(ILiftService liftService)
     {
-        return TypedResults.Ok(await db.Lifts.ToArrayAsync());
+        var result = await liftService.GetAllAsync();
+        return result.Success ? TypedResults.Ok(result) : TypedResults.BadRequest(result);
     }
 
-    static async Task<IResult> GetLiftByName(LiftDb db)
+    static async Task<IResult> GetLiftByName(ILiftService liftService, LiftName name)
     {
-        return TypedResults.Ok(await db.Lifts.Where(t => t.Name == Lift.LiftName.Squat).ToListAsync());
+        var result = await liftService.GetByLiftName(name);
+        return result.Success ? TypedResults.Ok(result) : TypedResults.BadRequest(result);
     }
 
-    static async Task<IResult> GetLift(int id, LiftDb db)
+    static async Task<IResult> GetLift(int id, ILiftService liftService)
     {
-        return await db.Lifts.FindAsync(id)
-            is Lift todo
-                ? Results.Ok(todo)
-                : Results.NotFound();
+        var result = await liftService.GetAsync(new Lift { Id = id });
+        return result.Success ? TypedResults.Ok(result) : TypedResults.BadRequest(result);
     }
 
-    static async Task<IResult> CreateLift(Lift lift, LiftDb db)
+    static async Task<IResult> CreateLift(Lift lift, ILiftService liftService)
     {
-        db.Lifts.Add(lift);
-        await db.SaveChangesAsync();
-
-        return TypedResults.Created($"/todoitems/{lift.Id}", lift);
+        var result = await liftService.CreateAsync(lift);
+        return result.Success ? TypedResults.Created($"/lifts/{lift.Id}", result) : TypedResults.BadRequest(result);
     }
 
-    static async Task<IResult> UpdateLift(int id, Lift inputLift, LiftDb db)
+    static async Task<IResult> UpdateLift(Lift inputLift, ILiftService liftService)
     {
-        var lift = await db.Lifts.FindAsync(id);
-
-        if (lift is null) return Results.NotFound();
-
-        lift.Name = inputLift.Name;
-        lift.Weight = inputLift.Weight;
-        lift.Reps = inputLift.Reps;
-
-        await db.SaveChangesAsync();
-
-        return TypedResults.NoContent();
+        var result = await liftService.UpdateAsync(inputLift);
+        return result.Success ? TypedResults.Ok(result) : TypedResults.BadRequest(result);
     }
 
-    static async Task<IResult> DeleteLift(int id, LiftDb db)
+    static async Task<IResult> DeleteLift(int id, ILiftService liftService)
     {
-        if (await db.Lifts.FindAsync(id) is Lift todo)
-        {
-            db.Lifts.Remove(todo);
-            await db.SaveChangesAsync();
-            return Results.NoContent();
-        }
+        var result = await liftService.DeleteAsync(id);
+        return result.Success ? TypedResults.Ok(result) : TypedResults.BadRequest(result);
 
-
-        return TypedResults.NotFound();
     }
 
     static Task<IResult> FakeError()

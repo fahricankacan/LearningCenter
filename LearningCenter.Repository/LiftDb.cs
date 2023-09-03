@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using LearningCenter.Entity.Concrate;
+using Microsoft.EntityFrameworkCore;
 
 namespace LearningCenter.WhatIsMinimalApi.Repository
 {
@@ -6,6 +7,6 @@ namespace LearningCenter.WhatIsMinimalApi.Repository
     {
         public LiftDb(DbContextOptions<LiftDb> options) : base(options) { }
 
-        public DbSet<Entity.Lift> Lifts => Set<Entity.Lift>();
+        public DbSet<Lift> Lifts => Set<Lift>();
     }
 }

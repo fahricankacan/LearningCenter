@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LearningCenter.Entity\LearningCenter.Entity.csproj" />
+    <ProjectReference Include="..\LearningCenter.Repository\LearningCenter.Repository.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,4 +1,4 @@
-﻿using LearningCenter.WhatIsMinimalApi.Entity;
+﻿using LearningCenter.Entity.Concrate;
 using Serilog;
 
 namespace LearningCenter.WhatIsMinimalApi.Middleware
