@@ -1,10 +1,10 @@
 using LearningCenter.Business.Abstract;
 using LearningCenter.Business.Concrate;
 using LearningCenter.Entity.Concrate;
+using LearningCenter.Repository;
 using LearningCenter.Repository.Abstract;
 using LearningCenter.Repository.Concrate;
 using LearningCenter.WhatIsMinimalApi.Middleware;
-using LearningCenter.WhatIsMinimalApi.Repository;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using static LearningCenter.Entity.Concrate.Lift;
