@@ -1,7 +1,6 @@
 ﻿using LearningCenter.Entity.Abstract;
 using LearningCenter.Entity.Concrate;
 using LearningCenter.Repository.Abstract;
-using LearningCenter.WhatIsMinimalApi.Repository;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 

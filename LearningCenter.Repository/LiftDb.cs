@@ -1,7 +1,7 @@
 ﻿using LearningCenter.Entity.Concrate;
 using Microsoft.EntityFrameworkCore;
 
-namespace LearningCenter.WhatIsMinimalApi.Repository
+namespace LearningCenter.Repository
 {
     public class LiftDb : DbContext
     {
