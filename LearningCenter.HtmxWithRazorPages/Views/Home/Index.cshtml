@@ -1,0 +1,59 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+<script>
+
+    // document.body.addEventListener('htmx:load', function (evt) {
+    //     htmx.logAll();
+    // });
+</script>
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+
+
+
+
+<button hx-post="/clicked" hx-swap="outerHTML">
+    Click Me
+</button>
+
+
+<a href="/Home/Privacy">Blog</a>
+<div id="helloWorld-div">
+</div>
+
+
+<button hx-post="/clicked"
+        hx-trigger="click"
+        hx-target="#helloWorld-div"
+        hx-swap="outerHTML">
+    Click Me! and see hello world in h1 
+</button>
+
+
+<div class="bg-danger col-4" hx-post="/mouse_entered" hx-trigger="mouseenter" hx-swap="innerHTML">
+    [Here Mouse, Mouse!]
+</div>
+
+<input type="text" name="q"
+       hx-get="/trigger_delay"
+       hx-trigger="keyup changed delay:500ms"
+       hx-target="#search-results"
+       placeholder="Search...">
+<div id="search-results"></div>
+
+<div class="m-3" hx-get="delayed_task" hx-trigger="load">loading... </div>
+
+<div class="m-3 bg-primary" hx-get="RandomNumber" hx-trigger="every 2s">Random Number Every Two Sec </div>
+
+
+<div>
+    <button hx-get="/delayed_task" hx-indicator="#indicator">
+        Click Me!
+    </button>
+    <img id="indicator" class="htmx-indicator" src="/spinner-3-svgrepo-com.svg" />
+</div>
+
+
